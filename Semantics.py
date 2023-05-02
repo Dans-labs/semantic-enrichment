@@ -25,6 +25,10 @@ class SemanticEnrichment():
     def __init__(self, config, debug=False):
         self.config = config
         self.SKOSMOSHOST = False
+        if debug:
+            self.DEBUG = debug
+        else:
+            self.DEBUG = False
 
     def set_skosmos(self, instanceurl):
         self.SKOSMOSHOST = instanceurl
@@ -68,8 +72,6 @@ ORDER BY DESC(?population) LIMIT 100
 
     def external_CVs(self,query):
         url = "%s/rest/v1/search?query=%s*" % (self.SKOSMOSHOST, query)
-        data = json.loads(requests.get(url).text)
-        return data['results']
         try:
             data = json.loads(requests.get(url).text)
             return data['results']
@@ -80,11 +82,10 @@ ORDER BY DESC(?population) LIMIT 100
         if not 'http' in url:
             url = url.replace('hdl:', '')
             url = url.replace('doi:', '')
-            #print(url)
             resolver = pydoi.resolve(url)['values']
-            #print(resolver)
             for item in resolver:
-                print(item)
+                if self.DEBUG:
+                    print(item)
                 if 'value' in item['data']:
                     check = re.search('http', str(item['data']['value']))
                     if check:
@@ -105,30 +106,30 @@ ORDER BY DESC(?population) LIMIT 100
 
     def skosmos_collect(self, url):
         skos_url = "%s/rest/v1/data?uri=%s" % (self.SKOSMOSHOST, url) + "&format=application/ld\%2Bjson"
-        #set_skosmos("https://thesauri.cessda.eu")
         
-        print("SKOS %s" % skos_url)
+        if self.DEBUG:
+            print("SKOS %s" % skos_url)
         content = json.loads(requests.get(skos_url).text)
-        #print(content)
         try:
             data = content['graph'][4]
         except:
             return []
 
-        print(json.dumps(data))
+        if self.DEBUG:
+            print(json.dumps(data))
+
         keywords = []
         if 'altLabel' in data:
             for item in data['altLabel']:
-            #print(item)
                 try:
                     q = "%s @%s" % (item['value'], item['lang'])
                     if not q in keywords:
                         keywords.append(q)
                 except:
                     continue
+
         if 'prefLabel' in data:
             for item in data['prefLabel']:
-            #print(item)
                 try:
                     q = "%s @%s" % (item['value'], item['lang'])
                     if not q in keywords:
@@ -158,21 +159,21 @@ ORDER BY DESC(?population) LIMIT 100
         for item in items:
             r = record[item]
             for q in r:
-                print("Keyword: %s" % q)
+                if self.DEBUG:
+                    print("Keyword: %s" % q)
+
                 data = self.external_CVs(q)
                 if data:
                     for s in data:
-                        #if s:
                         try:
-                            #print(s['prefLabel'])
                             if not s['prefLabel'] in keywords:
                                 keywords.append(s['prefLabel'])
 
                             if not s['uri'] in knownurl:
-                                print(s['uri'])
+                                if self.DEBUG:
+                                    print(s['uri'])
                                 try:
                                     newkeywords = self.skosmos_collect(s['uri'])
-                                    print("keys")
                                     for k in newkeywords:
                                         if not k in keywords:
                                             keywords.append(k)
