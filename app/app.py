@@ -76,11 +76,12 @@ def version():
     return '0.1'
 
 @app.get("/importdoi")
-async def importdoi(token: str, pid: Optional[str] = None, dataurl: Optional[str] = None):
+async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] = None):
     config = {}
     s = SemanticEnrichment(config, debug=True)
     #dataurl = "https://datasets.iisg.amsterdam/api/datasets/export?exporter=dataverse_json&persistentId=%s" % pid
-    dataurl = "https://portal.odissei.nl/api/datasets/export?exporter=dataverse_json&persistentId=%s" % pid
+    if base:
+        dataurl = "https://%s/api/datasets/export?exporter=dataverse_json&persistentId=%s" % (base, pid)
     s.set_base(os.environ['base_url'])
     s.set_solr(os.environ['SOLR'])
     resp = s.republish_dataset(dataurl, pid, token)
