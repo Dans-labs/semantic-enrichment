@@ -44,6 +44,9 @@ class SemanticEnrichment():
             metadata = json.load(url)
 
         url = "%s/api/dataverses/root/datasets/:import?pid=%s&release=yes" % (self.base_url, PERSISTENT_IDENTIFIER)
+        if 'metadataLanguage' in metadata:
+            del metadata['metadataLanguage']
+        print(json.dumps(metadata))
         params = {'key': token }
         resp = post(
                 url,
@@ -141,7 +144,7 @@ ORDER BY DESC(?population) LIMIT 100
     def query_solr(self, query=False):
         if not query:
             query = "*.*"
-        SOLR_API = "%s:8983/solr/collection1/select?q=%s&wt=json&indent=true" % (self.SOLR_url, query)
+        SOLR_API = "%s/solr/collection1/select?q=%s&wt=json&indent=true" % (self.SOLR_url, query)
         doc = json.loads(requests.get(SOLR_API).text)['response']['docs']
         del doc[0]['_version_']
         return doc[0]
