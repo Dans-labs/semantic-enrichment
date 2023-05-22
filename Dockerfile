@@ -5,6 +5,7 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x  | bash -
 RUN apt-get -y install poppler-utils nodejs wget bash vim git nodejs jq
 RUN npm install -g wikidata-taxonomy
 RUN npm install -g wikibase-cli
+COPY ./Semantics.py /app/
 COPY ./conf /app/conf
 COPY ./static/ /app/static
 COPY ./app /app

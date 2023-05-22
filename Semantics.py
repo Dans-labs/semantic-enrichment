@@ -6,9 +6,7 @@ import mkwikidata
 import subprocess
 import json
 import os
-import pandas as pd
 import io
-import pandas as pd
 #from pyDataverse.api import DataAccessApi
 #from pyDataverse.api import NativeApi
 from pyDataverse.models import Dataset

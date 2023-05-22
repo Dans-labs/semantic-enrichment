@@ -5,3 +5,5 @@ future==0.17.1
 bs4
 lxml
 langdetect
+mkwikidata
+pydoi
