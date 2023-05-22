@@ -16,6 +16,10 @@ from starlette.staticfiles import StaticFiles
 #from src.model import Vocabularies, WriteXML
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.cors import CORSMiddleware
+from Semantics import SemanticEnrichment
+import os
+import json
+import requests
 
 def custom_openapi():
     if app.openapi_schema:
@@ -71,9 +75,32 @@ app.openapi = custom_openapi
 def version():
     return '0.1'
 
-@app.get("/dataverse")
-async def dataverse(baseurl: str, doi: str, token: Optional[str] = None):
-    return 'dataverse'
+@app.get("/importdoi")
+async def importdoi(token: str, pid: Optional[str] = None, dataurl: Optional[str] = None):
+    config = {}
+    s = SemanticEnrichment(config, debug=True)
+    #dataurl = "https://datasets.iisg.amsterdam/api/datasets/export?exporter=dataverse_json&persistentId=%s" % pid
+    dataurl = "https://portal.odissei.nl/api/datasets/export?exporter=dataverse_json&persistentId=%s" % pid
+    s.set_base(os.environ['base_url'])
+    s.set_solr(os.environ['SOLR'])
+    resp = s.republish_dataset(dataurl, pid, token)
+    if 'data' in json.loads(resp):
+        entityId = json.loads(resp)['data']['id']
+    else:
+        entityId = s.dataverse_metadata("%s/dataset.xhtml?persistentId=%s" % (os.environ['base_url'], pid))['id']
+
+    if entityId:
+        q = "entityId:%s" % entityId
+        s.set_skosmos("https://thesauri.cessda.eu")
+        #s.set_skosmos("https://finto.fi")
+        record = s.collector(q)
+        record_file = '/tmp/data.json'
+        with open(record_file, 'w') as f:
+            json.dump([record], f, indent=4)
+
+        resp = requests.post("%s/solr/collection1/update?commit=true" % os.environ['SOLR'], headers={"Content-Type":"application/json"}, data=json.dumps([record]))
+        return resp.text
+    return
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=9266)
