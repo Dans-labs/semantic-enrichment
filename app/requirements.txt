@@ -1,4 +1,7 @@
 git+https://github.com/AUSSDA/pyDataverse.git@develop
+requests
+#pyDataverse==0.2.1
+#pyDataverse
 datefinder
 jinja2==3.0.3
 future==0.17.1

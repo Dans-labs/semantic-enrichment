@@ -8,7 +8,7 @@ import json
 import os
 import io
 #from pyDataverse.api import DataAccessApi
-#from pyDataverse.api import NativeApi
+from pyDataverse.api import NativeApi
 from pyDataverse.models import Dataset
 from pyDataverse.api import Api
 import re
@@ -99,7 +99,7 @@ ORDER BY DESC(?population) LIMIT 100
             connector['hostDOI'] = urlchecker.group(1)
             connector['thisDOI'] = urlchecker.group(2)
         if 'thisDOI' in connector:
-            native_api = Api(connector['hostDOI'])
+            native_api = NativeApi(connector['hostDOI'])
             resp = native_api.get_dataset(connector['thisDOI'])
             # Get all datafiles related information
             data = resp.json()["data"]
