@@ -1,0 +1,7 @@
+git+https://github.com/AUSSDA/pyDataverse.git@develop
+datefinder
+jinja2==3.0.3
+future==0.17.1
+bs4
+lxml
+langdetect

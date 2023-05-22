@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  semanticapi:
+    build: . 
+    container_name: semanticapi
+    ports:
+      # The HTTP port
+      - "8099:80"
+      - "8098:8080"
+    environment:
+      - DEBUG_DISABLE=${DEBUG_DISABLE}
+      - DEBUG_LEVEL=${DEBUG_LEVEL}
+    volumes:
+      - ./data:/tmp
+    networks:
+      - default
+      - traefik
+
+networks:
+  traefik:
+    external: true
