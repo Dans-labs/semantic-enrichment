@@ -11,6 +11,10 @@ services:
     environment:
       - DEBUG_DISABLE=${DEBUG_DISABLE}
       - DEBUG_LEVEL=${DEBUG_LEVEL}
+      - "SOLR"
+      - "base_url"
+      - "forbiddenfields"
+      - "CVfields"
     volumes:
       - ./data:/tmp
     networks:

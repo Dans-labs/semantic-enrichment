@@ -38,12 +38,20 @@ class SemanticEnrichment():
         self.SOLR_url = SOLR_URL
 
     def republish_dataset(self, dataurl, PERSISTENT_IDENTIFIER, token=True):
-        with urllib.request.urlopen(dataurl) as url:
-            metadata = json.load(url)
+        #try:
+        if dataurl:
+            headers = {'user-agent': 'my-app/0.0.1'}
+            r = requests.get(dataurl, headers=headers)
+            metadata = r.json()
+            #with urllib.request.urlopen(dataurl) as url:
+            #    metadata = json.load(url)
+        #except:
+            print("Resource not available or no access")
 
         url = "%s/api/dataverses/root/datasets/:import?pid=%s&release=yes" % (self.base_url, PERSISTENT_IDENTIFIER)
-        if 'metadataLanguage' in metadata:
-            del metadata['metadataLanguage']
+        for forbiddenfield in os.environ['forbiddenfields'].split(','):
+            if forbiddenfield in metadata:
+                del metadata[forbiddenfield]
         print(json.dumps(metadata))
         params = {'key': token }
         resp = post(
@@ -149,7 +157,7 @@ ORDER BY DESC(?population) LIMIT 100
 
     def collector(self, q):
         record = self.query_solr(q)
-        vocitems = ['keywordValue', 'keywordValue_ss', 'topicClassValue']
+        vocitems = os.environ['CVfields'].split(',') # ['keywordValue', 'keywordValue_ss', 'topicClassValue']
         items = []
         keywords = []
         knownurl = {}
