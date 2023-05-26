@@ -20,13 +20,19 @@ from requests import put
 import urllib.request, json
 
 class SemanticEnrichment():
-    def __init__(self, config, debug=False):
+    def __init__(self, config, complexquery=None, debug=False):
         self.config = config
         self.SKOSMOSHOST = False
+        self.complexquery = ''
         if debug:
             self.DEBUG = debug
         else:
             self.DEBUG = False
+        if complexquery:
+            self.complexquery = complexquery
+        else:
+            if 'querytemplate' in os.environ:
+                self.complexquery = os.environ['querytemplate']
 
     def set_skosmos(self, instanceurl):
         self.SKOSMOSHOST = instanceurl
@@ -79,8 +85,15 @@ ORDER BY DESC(?population) LIMIT 100
         data = [{"name" : x["cityLabel"]["value"], "population" : int(x["population"]["value"])} for x in query_result["results"]["bindings"]]
         return data
 
-    def external_CVs(self,query):
-        url = "%s/rest/v1/search?query=%s*" % (self.SKOSMOSHOST, query)
+    def external_CVs(self, queryparams):
+        if self.complexquery:
+            complexquery = self.complexquery.replace('%%query%%', "%s*" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
+        else:
+            # query=%s*&fields=prefLabel&lang=nl&vocab=elsst-3
+            complexquery = "query=%s*&fields=%s&lang=%s&vocab=%s&querytype=V2" % (queryparams['query'], queryparams['fields'], queryparams['lang'], queryparams['vocab'])
+        url = "%s/rest/v1/search?query=%s" % (self.SKOSMOSHOST, complexquery)
+        print(url)
+
         try:
             data = json.loads(requests.get(url).text)
             return data['results']
@@ -171,7 +184,24 @@ ORDER BY DESC(?population) LIMIT 100
                 if self.DEBUG:
                     print("Keyword: %s" % q)
 
-                data = self.external_CVs(q)
+                queryobject = { 'query': q, 'fields': '', 'vocab': '', 'lang': '' } 
+                if 'skosmosendpoint' in self.config:
+                    queryobject['skosmosendpoint'] = self.config['skosmosendpoint']
+                    self.set_skosmos(self.config['skosmosendpoint'])
+                else:
+                    # Default Skosmos endpoint in .env
+                    # example: https://thesauri.cessda.eu
+                    if 'skosmosendpoint' in os.environ:
+                        self.set_skosmos(os.environ['skosmosendpoint'])
+
+                if 'fields' in self.config:
+                    queryobject['fields'] = self.config['fields']
+                if 'vocab' in self.config:
+                    queryobject['vocab'] = self.config['vocab']
+                if 'lang' in self.config:
+                    queryobject['lang'] = self.config['lang']
+
+                data = self.external_CVs(queryobject)
                 if data:
                     for s in data:
                         try:

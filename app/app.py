@@ -76,8 +76,17 @@ def version():
     return '0.1'
 
 @app.get("/importdoi")
-async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] = None):
+async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] = None, skosmosendpoint: Optional[str] = None, fields: Optional[str] = None, lang: Optional[str] = None, vocab: Optional[str] = None,):
     config = {}
+    if skosmosendpoint:
+        config['skosmosendpoint'] = skosmosendpoint
+    if fields:
+        config['fields'] = fields
+    if lang:
+        config['lang'] = lang
+    if vocab:
+        config['vocab'] = vocab
+
     s = SemanticEnrichment(config, debug=True)
     #dataurl = "https://datasets.iisg.amsterdam/api/datasets/export?exporter=dataverse_json&persistentId=%s" % pid
     if base:
@@ -92,7 +101,6 @@ async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] =
 
     if entityId:
         q = "entityId:%s" % entityId
-        s.set_skosmos("https://thesauri.cessda.eu")
         #s.set_skosmos("https://finto.fi")
         record = s.collector(q)
         record_file = '/tmp/data.json'
