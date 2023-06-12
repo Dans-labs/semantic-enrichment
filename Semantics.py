@@ -153,9 +153,15 @@ ORDER BY DESC(?population) LIMIT 100
         if 'prefLabel' in data:
             for item in data['prefLabel']:
                 try:
-                    q = "%s @%s" % (item['value'], item['lang'])
-                    if not q in keywords:
-                        keywords.append(q)
+                    if not os.environ['strict_lookup']:
+                        q = "%s @%s" % (item['value'], item['lang'])
+                        if not q in keywords:
+                            keywords.append(q)
+                    else:
+                        # Strict match
+                        if item['value'].lower() == q.lower():
+                            if not q in keywords:
+                                keywords.append(q)
                 except:
                     continue
         return keywords

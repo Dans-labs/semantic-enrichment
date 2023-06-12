@@ -17,6 +17,7 @@ services:
       - "skosmosendpoint"
       - "CVfields"
       - "querytemplate"
+      - "strict_lookup"
     volumes:
       - ./data:/tmp
     networks:
