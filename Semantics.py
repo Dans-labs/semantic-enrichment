@@ -24,8 +24,8 @@ class SemanticEnrichment():
         self.config = config
         self.SKOSMOSHOST = False
         self.complexquery = ''
-        if debug:
-            self.DEBUG = debug
+        if 'DEBUG' in os.environ:
+            self.DEBUG = os.environ['DEBUG']
         else:
             self.DEBUG = False
         if complexquery:
@@ -85,13 +85,14 @@ ORDER BY DESC(?population) LIMIT 100
         data = [{"name" : x["cityLabel"]["value"], "population" : int(x["population"]["value"])} for x in query_result["results"]["bindings"]]
         return data
 
-    def external_CVs(self, queryparams):
+    def external_CVs(self, queryparams, complexquery=False):
+        print(queryparams)
         if self.complexquery:
             if 'fuzzy_search' in os.environ:
                 if os.environ['fuzzy_search']:
                     complexquery = self.complexquery.replace('%%query%%', "%s*" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
-                else:
-                    complexquery = self.complexquery.replace('%%query%%', "%s" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
+            else:
+                complexquery = self.complexquery.replace('%%query%%', "%s" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
         else:
             # query=%s*&fields=prefLabel&lang=nl&vocab=elsst-3
             if os.environ['fuzzy_search']:
@@ -100,7 +101,8 @@ ORDER BY DESC(?population) LIMIT 100
                 complexquery = "query=%s&fields=%s&lang=%s&vocab=%s&querytype=V2" % (queryparams['query'], queryparams['fields'], queryparams['lang'], queryparams['vocab'])
        
         url = "%s/rest/v1/search?query=%s" % (self.SKOSMOSHOST, complexquery)
-        print(url)
+        if self.DEBUG:
+            print("[DEBUG URL] %s" % url)
 
         try:
             data = json.loads(requests.get(url).text)
@@ -138,7 +140,7 @@ ORDER BY DESC(?population) LIMIT 100
         skos_url = "%s/rest/v1/data?uri=%s" % (self.SKOSMOSHOST, url) + "&format=application/ld\%2Bjson"
         
         if self.DEBUG:
-            print("SKOS %s" % skos_url)
+            print("[DEBUG SKOS] %s" % skos_url)
         content = json.loads(requests.get(skos_url).text)
         try:
             data = content['graph'][4]
@@ -215,28 +217,23 @@ ORDER BY DESC(?population) LIMIT 100
                 if 'lang' in self.config:
                     queryobject['lang'] = self.config['lang']
 
-                data = self.external_CVs(queryobject)
-                if data:
-                    for s in data:
-                        try:
-                            if not s['prefLabel'] in keywords:
-                                keywords.append(s['prefLabel'])
-
-                            if not s['uri'] in knownurl:
-                                if self.DEBUG:
-                                    print(s['uri'])
-                                try:
-                                    newkeywords = self.skosmos_collect(s['uri'])
-                                    for k in newkeywords:
-                                        if not k in keywords:
-                                            keywords.append(k)
-                                    knownurl[s['uri']] = s
-                                except:
-                                    continue
-                        except:
-                            continue
+                #for thisquery in queryobject['query'].split('/|  en |,'):
+                for thisquery in re.split('/|  en |,', queryobject['query']):
+                    thisqueryobject = queryobject
+                    thisqueryobject['query'] = thisquery
+                    data = self.external_CVs(queryobject)
+                    if data:
+                        for s in data:
+                            print("[DEBUG RESULT1] %s" % s['prefLabels'])
+                            for langproperty in s['prefLabels']:
+                                langterm = "%s @%s" % (s['prefLabels'][langproperty], langproperty)
+                                if not langterm in keywords:
+                                    keywords.append(langterm)
 
         if keywords:
             record['keywordValue'] = keywords
+            if self.DEBUG:
+                for keyword in keywords:
+                    print("\t[DEBUG ENRICHED KEYWORD] %s" % keyword)
         return record
 
