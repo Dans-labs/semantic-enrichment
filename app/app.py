@@ -76,7 +76,7 @@ def version():
     return '0.1'
 
 @app.get("/importdoi")
-async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] = None, skosmosendpoint: Optional[str] = None, fields: Optional[str] = None, lang: Optional[str] = None, vocab: Optional[str] = None,):
+async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] = None, skosmosendpoint: Optional[str] = None, fields: Optional[str] = None, lang: Optional[str] = None, vocab: Optional[str] = None, subdataverse: Optional[str] = None):
     config = {}
     if skosmosendpoint:
         config['skosmosendpoint'] = skosmosendpoint
@@ -93,7 +93,7 @@ async def importdoi(token: str, pid: Optional[str] = None, base: Optional[str] =
         dataurl = "https://%s/api/datasets/export?exporter=dataverse_json&persistentId=%s" % (base, pid)
     s.set_base(os.environ['base_url'])
     s.set_solr(os.environ['SOLR'])
-    resp = s.republish_dataset(dataurl, pid, token)
+    resp = s.republish_dataset(dataurl, pid, subdataverse, token)
     if 'data' in json.loads(resp):
         entityId = json.loads(resp)['data']['id']
     else:

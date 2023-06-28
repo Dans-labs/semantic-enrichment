@@ -43,7 +43,7 @@ class SemanticEnrichment():
     def set_solr(self, SOLR_URL):
         self.SOLR_url = SOLR_URL
 
-    def republish_dataset(self, dataurl, PERSISTENT_IDENTIFIER, token=True):
+    def republish_dataset(self, dataurl, PERSISTENT_IDENTIFIER, subdataverse='root', token=True):
         #try:
         if dataurl:
             headers = {'user-agent': 'my-app/0.0.1'}
@@ -54,7 +54,9 @@ class SemanticEnrichment():
         #except:
             print("Resource not available or no access")
 
-        url = "%s/api/dataverses/root/datasets/:import?pid=%s&release=yes" % (self.base_url, PERSISTENT_IDENTIFIER)
+        url = "%s/api/dataverses/%s/datasets/:import?pid=%s&release=yes" % (self.base_url, subdataverse, PERSISTENT_IDENTIFIER)
+        if self.DEBUG:
+            print("[DEBUG Dataverse] %s" % url)
         for forbiddenfield in os.environ['forbiddenfields'].split(','):
             if forbiddenfield in metadata:
                 del metadata[forbiddenfield]
@@ -235,5 +237,9 @@ ORDER BY DESC(?population) LIMIT 100
             if self.DEBUG:
                 for keyword in keywords:
                     print("\t[DEBUG ENRICHED KEYWORD] %s" % keyword)
+
+        if 'LABELRANKING' in os.environ:
+            # Experiment with changing ranking based on labels
+            record['accessToSources'] = 'middle'
         return record
 
