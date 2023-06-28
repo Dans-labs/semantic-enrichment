@@ -87,10 +87,18 @@ ORDER BY DESC(?population) LIMIT 100
 
     def external_CVs(self, queryparams):
         if self.complexquery:
-            complexquery = self.complexquery.replace('%%query%%', "%s*" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
+            if 'fuzzy_search' in os.environ:
+                if os.environ['fuzzy_search']:
+                    complexquery = self.complexquery.replace('%%query%%', "%s*" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
+                else:
+                    complexquery = self.complexquery.replace('%%query%%', "%s" % queryparams['query']).replace('%%fields%%', queryparams['fields']).replace('%%lang%%', queryparams['lang']).replace('%%vocab%%', queryparams['vocab'])
         else:
             # query=%s*&fields=prefLabel&lang=nl&vocab=elsst-3
-            complexquery = "query=%s*&fields=%s&lang=%s&vocab=%s&querytype=V2" % (queryparams['query'], queryparams['fields'], queryparams['lang'], queryparams['vocab'])
+            if os.environ['fuzzy_search']:
+                complexquery = "query=%s*&fields=%s&lang=%s&vocab=%s&querytype=V2" % (queryparams['query'], queryparams['fields'], queryparams['lang'], queryparams['vocab'])
+            else:
+                complexquery = "query=%s&fields=%s&lang=%s&vocab=%s&querytype=V2" % (queryparams['query'], queryparams['fields'], queryparams['lang'], queryparams['vocab'])
+       
         url = "%s/rest/v1/search?query=%s" % (self.SKOSMOSHOST, complexquery)
         print(url)
 
