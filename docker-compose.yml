@@ -11,6 +11,7 @@ services:
     environment:
       - DEBUG_DISABLE=${DEBUG_DISABLE}
       - DEBUG_LEVEL=${DEBUG_LEVEL}
+      - "DEBUG"
       - "SOLR"
       - "base_url"
       - "forbiddenfields"
@@ -20,6 +21,8 @@ services:
       - "strict_lookup"
     volumes:
       - ./data:/tmp
+        #      - ${PWD}/app/app.py:/app/main.py
+        #- ${PWD}/Semantics.py:/app/Semantics.py
     networks:
       - default
       - traefik
