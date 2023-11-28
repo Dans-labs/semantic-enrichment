@@ -1,4 +1,6 @@
 git+https://github.com/AUSSDA/pyDataverse.git@develop
+pandas
+mkwikidata
 requests
 #pyDataverse==0.2.1
 #pyDataverse
