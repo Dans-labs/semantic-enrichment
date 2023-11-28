@@ -1,4 +1,6 @@
 git+https://github.com/AUSSDA/pyDataverse.git@develop
+bs4
+rdflib
 pandas
 mkwikidata
 requests
